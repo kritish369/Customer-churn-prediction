@@ -1,0 +1,242 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Customer Churn Predictor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+  <div class="layout">
+
+    <!-- Left: intro + result -->
+    <aside class="side">
+      <h1>Will this customer stay?</h1>
+      <p class="lede">Fill in the customer’s profile and the model will tell you whether they are likely to churn.</p>
+
+      <!-- Django: pass `prediction` ("Yes"/"No") and optionally `probability` (0-100) in the context -->
+      <div class="result {% if prediction == 'Yes' %}result--churn{% elif prediction == 'No' %}result--stay{% else %}result--idle{% endif %}" aria-live="polite">
+        {% if prediction == 'Yes' %}
+          <p class="result__verdict">Likely to churn</p>
+          <p class="result__note">This customer fits the profile of those who leave.</p>
+        {% elif prediction == 'No' %}
+          <p class="result__verdict">Likely to stay</p>
+          <p class="result__note">This customer fits the profile of those who remain.</p>
+        {% else %}
+          <p class="result__verdict">No prediction yet</p>
+          <p class="result__note">Submit the form to see the result here.</p>
+        {% endif %}
+        {% if probability %}
+          <p class="result__prob">Churn probability: <strong>{{ probability }}%</strong></p>
+        {% endif %}
+      </div>
+    </aside>
+
+    <!-- Right: form -->
+    <main>
+      <form method="post" action="" class="form" id="churn-form">
+        {% csrf_token %}
+
+        <fieldset>
+          <legend>Account</legend>
+          <div class="grid">
+            <label class="field">
+              <span>Tenure (months)</span>
+              <input type="number" name="tenure" min="0" max="72" step="1" placeholder="0 – 72" required>
+            </label>
+            <label class="field">
+              <span>Total charges ($)</span>
+              <input type="number" name="TotalCharges" min="0" step="0.01" placeholder="e.g. 1889.50" required>
+            </label>
+            <label class="field">
+              <span>Contract</span>
+              <select name="Contract" required>
+                <option value="" disabled selected>Choose…</option>
+                <option value="Month-to-month">Month-to-month</option>
+                <option value="One year">One year</option>
+                <option value="Two year">Two year</option>
+              </select>
+            </label>
+            <div class="field">
+              <span>Paperless billing</span>
+              <div class="seg">
+                <input type="radio" name="PaperlessBilling" id="pb-yes" value="Yes" required><label for="pb-yes">Yes</label>
+                <input type="radio" name="PaperlessBilling" id="pb-no" value="No"><label for="pb-no">No</label>
+              </div>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Customer</legend>
+          <div class="grid">
+            <label class="field">
+              <span>Customer ID </span>
+              <input type="number" name="CustomerID" min="0" step="1" placeholder="0" required>
+            </label>
+            <label class="field">
+              <span>Gender</span>
+              <select name="gender" required>
+                <option value="" disabled selected>Choose…</option>
+                <option value="Female">Female</option>
+                <option value="Male">Male</option>
+              </select>
+            </label>
+            <div class="field">
+              <span>Senior citizen</span>
+              <div class="seg">
+                <input type="radio" name="SeniorCitizen" id="sc-yes" value="1" required><label for="sc-yes">Yes</label>
+                <input type="radio" name="SeniorCitizen" id="sc-no" value="0"><label for="sc-no">No</label>
+              </div>
+            </div>
+            <div class="field">
+              <span>Has partner</span>
+              <div class="seg">
+                <input type="radio" name="Partner" id="pa-yes" value="Yes" required><label for="pa-yes">Yes</label>
+                <input type="radio" name="Partner" id="pa-no" value="No"><label for="pa-no">No</label>
+              </div>
+            </div>
+            <div class="field">
+              <span>Has dependents</span>
+              <div class="seg">
+                <input type="radio" name="Dependents" id="de-yes" value="Yes" required><label for="de-yes">Yes</label>
+                <input type="radio" name="Dependents" id="de-no" value="No"><label for="de-no">No</label>
+              </div>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Phone</legend>
+          <div class="grid">
+            <div class="field">
+              <span>Phone service</span>
+              <div class="seg">
+                <input type="radio" name="PhoneService" id="ph-yes" value="Yes" required><label for="ph-yes">Yes</label>
+                <input type="radio" name="PhoneService" id="ph-no" value="No"><label for="ph-no">No</label>
+              </div>
+            </div>
+            <label class="field">
+              <span>Multiple lines</span>
+              <select name="MultipleLines" id="MultipleLines" required>
+                <option value="" disabled selected>Choose…</option>
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+                <option value="No phone service">No phone service</option>
+              </select>
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Internet and add-ons</legend>
+          <div class="grid">
+            <label class="field">
+              <span>Internet service</span>
+              <select name="InternetService" id="InternetService" required>
+                <option value="" disabled selected>Choose…</option>
+                <option value="DSL">DSL</option>
+                <option value="Fiber optic">Fiber optic</option>
+                <option value="No">No internet</option>
+              </select>
+            </label>
+
+            {% comment %} Six add-on selects, all share the same options {% endcomment %}
+            <label class="field">
+              <span>Online security</span>
+              <select name="OnlineSecurity" class="addon" required>
+                <option value="" disabled selected>Choose…</option>
+                <option value="No">No</option><option value="Yes">Yes</option>
+                <option value="No internet service">No internet service</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Online backup</span>
+              <select name="OnlineBackup" class="addon" required>
+                <option value="" disabled selected>Choose…</option>
+                <option value="No">No</option><option value="Yes">Yes</option>
+                <option value="No internet service">No internet service</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Device protection</span>
+              <select name="DeviceProtection" class="addon" required>
+                <option value="" disabled selected>Choose…</option>
+                <option value="No">No</option><option value="Yes">Yes</option>
+                <option value="No internet service">No internet service</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Tech support</span>
+              <select name="TechSupport" class="addon" required>
+                <option value="" disabled selected>Choose…</option>
+                <option value="No">No</option><option value="Yes">Yes</option>
+                <option value="No internet service">No internet service</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Streaming TV</span>
+              <select name="StreamingTV" class="addon" required>
+                <option value="" disabled selected>Choose…</option>
+                <option value="No">No</option><option value="Yes">Yes</option>
+                <option value="No internet service">No internet service</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Streaming movies</span>
+              <select name="StreamingMovies" class="addon" required>
+                <option value="" disabled selected>Choose…</option>
+                <option value="No">No</option><option value="Yes">Yes</option>
+                <option value="No internet service">No internet service</option>
+              </select>
+            </label>
+          </div>
+        </fieldset>
+
+        <button type="submit" class="submit">Predict churn</button>
+      </form>
+    </main>
+  </div>
+
+  <script>
+    // Keep dependent fields consistent with how the dataset encodes them.
+    (function () {
+      const noInternet = "No internet service";
+      const internet = document.getElementById("InternetService");
+      const addons = document.querySelectorAll(".addon");
+      const lines = document.getElementById("MultipleLines");
+      const phone = document.querySelectorAll('input[name="PhoneService"]');
+
+      function lockSelect(select, value, locked) {
+        if (locked) {
+          select.value = value;
+          select.classList.add("is-locked");
+          select.setAttribute("data-locked", "true");
+        } else {
+          if (select.value === value) select.value = "";
+          select.classList.remove("is-locked");
+          select.removeAttribute("data-locked");
+        }
+        // Disabled selects aren't submitted, so block interaction with pointer-events in CSS instead.
+        select.tabIndex = locked ? -1 : 0;
+      }
+
+      function syncInternet() {
+        const none = internet.value === "No";
+        addons.forEach(s => lockSelect(s, noInternet, none));
+      }
+      function syncPhone() {
+        const checked = document.querySelector('input[name="PhoneService"]:checked');
+        lockSelect(lines, "No phone service", checked && checked.value === "No");
+      }
+
+      internet.addEventListener("change", syncInternet);
+      phone.forEach(r => r.addEventListener("change", syncPhone));
+    })();
+  </script>
+</body>
+</html>

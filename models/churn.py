@@ -1,6 +1,5 @@
 
 import pandas as pd
-
 from sklearn.preprocessing import OneHotEncoder, LabelBinarizer
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
@@ -15,9 +14,12 @@ from sklearn.metrics import (
     f1_score,
     roc_auc_score
 )
+from pathlib import Path
+import joblib as joblib
 
 # 1. Load the dataset
-data = pd.read_csv("Telco_Customer_Churn_Dataset  (1).csv")
+BASE_DIR = Path(__file__).resolve().parent.parent   # the "saiket systems" folder
+data = pd.read_csv("/Users/mac/Desktop/saiket systems/data/Telco_Customer_Churn_Dataset .csv")
 
 # 2. Convert TotalCharges to numeric
 data["TotalCharges"] = pd.to_numeric(
@@ -180,4 +182,15 @@ print(
     .round(4)
     .to_string(index=False)
 )
-
+with open(BASE_DIR / "models" / "model_joblib_random_forest", "wb") as f:
+    joblib.dump(models["Random Forest"], f)
+with open(BASE_DIR / "models" / "model_joblib_Logistic_Regression", "wb") as f:
+    joblib.dump(models["Logistic Regression"], f)
+with open(BASE_DIR / "models" / "model_joblib_Decision_Tree", "wb") as f:
+    joblib.dump(models["Decision Tree"], f)
+with open(BASE_DIR / "models" / "model_joblib_Gradient_Boosting", "wb") as f:
+    joblib.dump(models["Gradient Boosting"], f)
+# saving encoder using joblib
+with open(BASE_DIR / "models" / "encoder_joblib", "wb") as f:
+    joblib.dump(encoder, f)
+    
